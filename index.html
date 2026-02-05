@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Chat Privado Online</title>
+<title>Chat Privado - Sin Nombre</title>
 
 <!-- Firebase CDN -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -20,159 +20,134 @@ body {
   align-items: center;
 }
 
-.box {
+#loginBox, #chat {
   background: rgba(0,0,0,0.5);
   padding: 20px;
-  border-radius: 12px;
-  width: 350px;
+  border-radius: 10px;
+  width: 320px;
 }
 
-input {
-  width: 95%;
+input, button {
+  width: 100%;
   padding: 10px;
-  margin: 8px 0;
-  border-radius: 8px;
+  margin-top: 10px;
   border: none;
+  border-radius: 5px;
 }
 
 button {
-  padding: 10px 15px;
-  border: none;
-  border-radius: 8px;
-  background: #00e5ff;
+  background: #00c6ff;
+  color: black;
   font-weight: bold;
   cursor: pointer;
-  margin-top: 5px;
 }
 
-#chat { display:none; }
-
 #messages {
-  height: 300px;
+  height: 250px;
   overflow-y: auto;
-  margin: 10px 0;
-  display: flex;
-  flex-direction: column;
+  background: white;
+  color: black;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 5px;
 }
 
 .msg {
-  max-width: 70%;
-  padding: 8px 12px;
   margin: 5px 0;
-  border-radius: 12px;
-  word-wrap: break-word;
+  padding: 5px 10px;
+  border-radius: 10px;
+  max-width: 80%;
 }
 
 .me {
-  align-self: flex-end;
-  background: #00e5ff;
-  color: black;
+  background: #00c6ff;
+  margin-left: auto;
+  text-align: right;
 }
 
 .other {
-  align-self: flex-start;
-  background: rgba(255,255,255,0.3);
-  color: white;
-}
-
-.buttons {
-  display: flex;
-  gap: 10px;
+  background: #ddd;
+  margin-right: auto;
+  text-align: left;
 }
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
-<div class="box" id="login">
-  <h3>Login</h3>
+<div id="loginBox">
+  <h2>Iniciar sesión</h2>
   <input id="user" placeholder="Usuario">
   <input id="pass" type="password" placeholder="Contraseña">
-  <button onclick="login()">Entrar</button>
+  <button onclick="loginUser()">Entrar</button>
 </div>
 
-<!-- CHAT -->
-<div class="box" id="chat">
-  <h3 id="welcome"></h3>
+<div id="chat" style="display:none">
+  <h2>Chat privado</h2>
   <div id="messages"></div>
-  <input id="msg" placeholder="Escribe un mensaje...">
-  <div class="buttons">
-    <button onclick="send()">Enviar</button>
-    <button onclick="logout()">Salir</button>
-  </div>
+  <input id="text" placeholder="Escribe un mensaje">
+  <button onclick="send()">Enviar</button>
 </div>
 
 <script>
-// CONFIGURACIÓN REAL DE TU FIREBASE
-const firebaseConfig = {
+var firebaseConfig = {
   apiKey: "AIzaSyCOF1P28mEDMlsQbvDYWkUTEF0EzQpi8t0",
   authDomain: "chat-seguro-de-sin-nombre.firebaseapp.com",
   databaseURL: "https://chat-seguro-de-sin-nombre-default-rtdb.firebaseio.com",
   projectId: "chat-seguro-de-sin-nombre",
-  storageBucket: "chat-seguro-de-sin-nombre.firebasestorage.app",
+  storageBucket: "chat-seguro-de-sin-nombre.appspot.com",
   messagingSenderId: "325857020249",
   appId: "1:325857020249:web:895ca856886fc1aab3e448"
 };
 
-// Inicializar Firebase
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+var db = firebase.database();
 
-// Usuarios permitidos
-const users = ["brandon", "yass"];
-const PASSWORD = "sin nombre";
-let currentUser = "";
+var currentUser = "";
 
-// Login
-function login(){
-  let u = user.value.toLowerCase();
-  let p = pass.value;
+var users = {
+  brandon: "sin nombre",
+  yass: "sin nombre"
+};
 
-  if(!users.includes(u) || p !== PASSWORD){
-    alert("Datos incorrectos");
-    return;
+function loginUser(){
+  var u = document.getElementById("user").value.toLowerCase();
+  var p = document.getElementById("pass").value;
+
+  if(users[u] && users[u] === p){
+    currentUser = u;
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("chat").style.display = "block";
+    loadMessages();
+  } else {
+    alert("Usuario o contraseña incorrectos");
   }
-
-  currentUser = u;
-  login.style.display = "none";
-  chat.style.display = "block";
-  welcome.innerText = "Bienvenido " + u;
-
-  db.ref("messages").on("child_added", snap => {
-    const m = snap.val();
-    const div = document.createElement("div");
-    div.classList.add("msg");
-    div.classList.add(m.user === currentUser ? "me" : "other");
-    div.innerText = m.user + ": " + m.text;
-    messages.appendChild(div);
-    messages.scrollTop = messages.scrollHeight;
-  });
 }
 
-// Enviar mensaje
 function send(){
-  if(msg.value.trim() === "") return;
-
-  db.ref("messages").push({
-    user: currentUser,
-    text: msg.value
-  });
-
-  msg.value = "";
+  var textBox = document.getElementById("text");
+  if(textBox.value.trim() !== ""){
+    db.ref("messages").push({
+      user: currentUser,
+      text: textBox.value
+    });
+    textBox.value = "";
+  }
 }
 
-// Enviar con Enter
-document.addEventListener("keydown", e => {
-  if(e.key === "Enter" && currentUser !== ""){
-    send();
-  }
+document.getElementById("text").addEventListener("keypress", function(e){
+  if(e.key === "Enter") send();
 });
 
-// Salir
-function logout(){
-  location.reload();
+function loadMessages(){
+  db.ref("messages").on("child_added", function(snapshot){
+    var data = snapshot.val();
+    var div = document.createElement("div");
+    div.classList.add("msg");
+    div.classList.add(data.user === currentUser ? "me" : "other");
+    div.innerText = data.user + ": " + data.text;
+    document.getElementById("messages").appendChild(div);
+  });
 }
 </script>
-
 </body>
 </html>
