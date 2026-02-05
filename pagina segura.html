@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Login Seguro</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(120deg, #2a5298, #1e3c72);
+      color: white;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login, .app {
+      display: none;
+      background: rgba(0,0,0,0.4);
+      padding: 40px;
+      border-radius: 15px;
+      text-align: center;
+      width: 300px;
+    }
+
+    .login input {
+      width: 90%;
+      padding: 10px;
+      margin: 15px 0;
+      border: none;
+      border-radius: 8px;
+    }
+
+    button {
+      padding: 10px 25px;
+      border: none;
+      border-radius: 8px;
+      background: #00e5ff;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .error {
+      color: #ff8080;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Pantalla Login -->
+  <div class="login" id="login">
+    <h2>Acceso privado</h2>
+    <p>Ingresa la contraseña</p>
+    <input type="password" id="password" placeholder="Contraseña">
+    <br>
+    <button onclick="login()">Entrar</button>
+    <div class="error" id="error"></div>
+  </div>
+
+  <!-- Pantalla App -->
+  <div class="app" id="app">
+    <h2>Bienvenida al chat 💬</h2>
+    <p>Zona segura</p>
+    <p>Aquí luego pondrás tu sistema de mensajes tipo foro.</p>
+  </div>
+
+  <script>
+    // contraseña
+    const PASSWORD = "sin nombre";
+
+    // mostrar login al inicio
+    document.getElementById("login").style.display = "block";
+
+    function login() {
+      let input = document.getElementById("password").value;
+
+      if (input === PASSWORD) {
+        document.getElementById("login").style.display = "none";
+        document.getElementById("app").style.display = "block";
+      } else {
+        document.getElementById("error").innerText = "Contraseña incorrecta ❌";
+      }
+    }
+  </script>
+
+</body>
+</html>
