@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Chat Privado Online</title>
+
+<!-- Firebase CDN -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: linear-gradient(120deg, #1e3c72, #2a5298);
+  color: white;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.box {
+  background: rgba(0,0,0,0.5);
+  padding: 20px;
+  border-radius: 12px;
+  width: 350px;
+}
+
+input {
+  width: 95%;
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 8px;
+  border: none;
+}
+
+button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 8px;
+  background: #00e5ff;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 5px;
+}
+
+#chat { display:none; }
+
+#messages {
+  height: 300px;
+  overflow-y: auto;
+  margin: 10px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.msg {
+  max-width: 70%;
+  padding: 8px 12px;
+  margin: 5px 0;
+  border-radius: 12px;
+  word-wrap: break-word;
+}
+
+.me {
+  align-self: flex-end;
+  background: #00e5ff;
+  color: black;
+}
+
+.other {
+  align-self: flex-start;
+  background: rgba(255,255,255,0.3);
+  color: white;
+}
+
+.buttons {
+  display: flex;
+  gap: 10px;
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="box" id="login">
+  <h3>Login</h3>
+  <input id="user" placeholder="Usuario">
+  <input id="pass" type="password" placeholder="Contraseña">
+  <button onclick="login()">Entrar</button>
+</div>
+
+<!-- CHAT -->
+<div class="box" id="chat">
+  <h3 id="welcome"></h3>
+  <div id="messages"></div>
+  <input id="msg" placeholder="Escribe un mensaje...">
+  <div class="buttons">
+    <button onclick="send()">Enviar</button>
+    <button onclick="logout()">Salir</button>
+  </div>
+</div>
+
+<script>
+// CONFIGURACIÓN REAL DE TU FIREBASE
+const firebaseConfig = {
+  apiKey: "AIzaSyCOF1P28mEDMlsQbvDYWkUTEF0EzQpi8t0",
+  authDomain: "chat-seguro-de-sin-nombre.firebaseapp.com",
+  databaseURL: "https://chat-seguro-de-sin-nombre-default-rtdb.firebaseio.com",
+  projectId: "chat-seguro-de-sin-nombre",
+  storageBucket: "chat-seguro-de-sin-nombre.firebasestorage.app",
+  messagingSenderId: "325857020249",
+  appId: "1:325857020249:web:895ca856886fc1aab3e448"
+};
+
+// Inicializar Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Usuarios permitidos
+const users = ["brandon", "yass"];
+const PASSWORD = "sin nombre";
+let currentUser = "";
+
+// Login
+function login(){
+  let u = user.value.toLowerCase();
+  let p = pass.value;
+
+  if(!users.includes(u) || p !== PASSWORD){
+    alert("Datos incorrectos");
+    return;
+  }
+
+  currentUser = u;
+  login.style.display = "none";
+  chat.style.display = "block";
+  welcome.innerText = "Bienvenido " + u;
+
+  db.ref("messages").on("child_added", snap => {
+    const m = snap.val();
+    const div = document.createElement("div");
+    div.classList.add("msg");
+    div.classList.add(m.user === currentUser ? "me" : "other");
+    div.innerText = m.user + ": " + m.text;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  });
+}
+
+// Enviar mensaje
+function send(){
+  if(msg.value.trim() === "") return;
+
+  db.ref("messages").push({
+    user: currentUser,
+    text: msg.value
+  });
+
+  msg.value = "";
+}
+
+// Enviar con Enter
+document.addEventListener("keydown", e => {
+  if(e.key === "Enter" && currentUser !== ""){
+    send();
+  }
+});
+
+// Salir
+function logout(){
+  location.reload();
+}
+</script>
+
+</body>
+</html>
