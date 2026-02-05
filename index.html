@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Chat Privado - Sin Nombre</title>
 
-<!-- Firebase CDN -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
@@ -39,11 +38,10 @@ button {
   background: #00c6ff;
   color: black;
   font-weight: bold;
-  cursor: pointer;
 }
 
 #messages {
-  height: 250px;
+  height: 220px;
   overflow-y: auto;
   background: white;
   color: black;
@@ -52,40 +50,33 @@ button {
   border-radius: 5px;
 }
 
-.msg {
-  margin: 5px 0;
-  padding: 5px 10px;
-  border-radius: 10px;
-  max-width: 80%;
+#typing {
+  font-size: 12px;
+  color: #ccc;
+  margin-top: 5px;
+  height: 15px;
 }
 
-.me {
-  background: #00c6ff;
-  margin-left: auto;
-  text-align: right;
-}
-
-.other {
-  background: #ddd;
-  margin-right: auto;
-  text-align: left;
-}
+.msg { margin: 5px 0; padding: 5px 10px; border-radius: 10px; }
+.me { background: #00c6ff; text-align: right; }
+.other { background: #ddd; text-align: left; }
 </style>
 </head>
 <body>
 
 <div id="loginBox">
-  <h2>Iniciar sesión</h2>
+  <h2>Login</h2>
   <input id="user" placeholder="Usuario">
   <input id="pass" type="password" placeholder="Contraseña">
-  <button onclick="loginUser()">Entrar</button>
+  <button id="btnLogin">Entrar</button>
 </div>
 
 <div id="chat" style="display:none">
-  <h2>Chat privado</h2>
+  <h2>Chat</h2>
   <div id="messages"></div>
-  <input id="text" placeholder="Escribe un mensaje">
-  <button onclick="send()">Enviar</button>
+  <div id="typing"></div>
+  <input id="text" placeholder="Mensaje">
+  <button id="btnSend">Enviar</button>
 </div>
 
 <script>
@@ -102,50 +93,83 @@ var firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 var db = firebase.database();
 
-var currentUser = "";
-
 var users = {
   brandon: "sin nombre",
   yass: "sin nombre"
 };
 
-function loginUser(){
-  var u = document.getElementById("user").value.toLowerCase();
-  var p = document.getElementById("pass").value;
+var currentUser = "";
+
+document.getElementById("btnLogin").onclick = function(){
+  var u = user.value.toLowerCase();
+  var p = pass.value;
 
   if(users[u] && users[u] === p){
     currentUser = u;
-    document.getElementById("loginBox").style.display = "none";
-    document.getElementById("chat").style.display = "block";
+    loginBox.style.display = "none";
+    chat.style.display = "block";
     loadMessages();
+    listenTyping();
   } else {
     alert("Usuario o contraseña incorrectos");
   }
-}
+};
+
+document.getElementById("btnSend").onclick = send;
+
+document.getElementById("text").addEventListener("keydown", function(e){
+  if(e.key === "Enter") send();
+  setTyping(true);
+});
+
+document.getElementById("text").addEventListener("keyup", function(){
+  clearTimeout(window.typingTimer);
+  window.typingTimer = setTimeout(function(){
+    setTyping(false);
+  }, 1000);
+});
 
 function send(){
-  var textBox = document.getElementById("text");
-  if(textBox.value.trim() !== ""){
+  var text = document.getElementById("text").value;
+  if(text.trim() !== ""){
     db.ref("messages").push({
       user: currentUser,
-      text: textBox.value
+      text: text
     });
-    textBox.value = "";
+    document.getElementById("text").value = "";
+    setTyping(false);
   }
 }
-
-document.getElementById("text").addEventListener("keypress", function(e){
-  if(e.key === "Enter") send();
-});
 
 function loadMessages(){
   db.ref("messages").on("child_added", function(snapshot){
     var data = snapshot.val();
     var div = document.createElement("div");
-    div.classList.add("msg");
-    div.classList.add(data.user === currentUser ? "me" : "other");
+    div.className = "msg " + (data.user === currentUser ? "me" : "other");
     div.innerText = data.user + ": " + data.text;
-    document.getElementById("messages").appendChild(div);
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  });
+}
+
+// --- TYPING ---
+
+function setTyping(state){
+  db.ref("typing/" + currentUser).set(state);
+}
+
+function listenTyping(){
+  db.ref("typing").on("value", function(snapshot){
+    var data = snapshot.val();
+    var typingText = "";
+
+    for(var user in data){
+      if(data[user] && user !== currentUser){
+        typingText = user + " está escribiendo...";
+      }
+    }
+
+    document.getElementById("typing").innerText = typingText;
   });
 }
 </script>
