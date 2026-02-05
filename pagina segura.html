@@ -1,91 +1,153 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>holaa este no es</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(120deg, #2a5298, #1e3c72);
-      color: white;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+<meta charset="UTF-8">
+<title>Chat Privado - Sin Nombre</title>
 
-    .login, .app {
-      display: none;
-      background: rgba(0,0,0,0.4);
-      padding: 40px;
-      border-radius: 15px;
-      text-align: center;
-      width: 300px;
-    }
+<!-- Firebase CDN -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
-    .login input {
-      width: 90%;
-      padding: 10px;
-      margin: 15px 0;
-      border: none;
-      border-radius: 8px;
-    }
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: linear-gradient(120deg, #1e3c72, #2a5298);
+  color: white;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-    button {
-      padding: 10px 25px;
-      border: none;
-      border-radius: 8px;
-      background: #00e5ff;
-      color: black;
-      font-weight: bold;
-      cursor: pointer;
-    }
+#loginBox, #chat {
+  background: rgba(0,0,0,0.5);
+  padding: 20px;
+  border-radius: 10px;
+  width: 320px;
+}
 
-    .error {
-      color: #ff8080;
-      margin-top: 10px;
-    }
-  </style>
+input, button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 5px;
+}
+
+button {
+  background: #00c6ff;
+  color: black;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#messages {
+  height: 250px;
+  overflow-y: auto;
+  background: white;
+  color: black;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 5px;
+}
+
+.msg {
+  margin: 5px 0;
+  padding: 5px 10px;
+  border-radius: 10px;
+  max-width: 80%;
+}
+
+.me {
+  background: #00c6ff;
+  margin-left: auto;
+  text-align: right;
+}
+
+.other {
+  background: #ddd;
+  margin-right: auto;
+  text-align: left;
+}
+</style>
 </head>
 <body>
 
-  <!-- Pantalla Login -->
-  <div class="login" id="login">
-    <h2>Acceso privado</h2>
-    <p>Ingresa la contraseña</p>
-    <input type="password" id="password" placeholder="Contraseña">
-    <br>
-    <button onclick="login()">Entrar</button>
-    <div class="error" id="error"></div>
-  </div>
+<div id="loginBox">
+  <h2>Iniciar sesión</h2>
+  <input id="user" placeholder="Usuario">
+  <input id="pass" type="password" placeholder="Contraseña">
+  <button onclick="loginUser()">Entrar</button>
+</div>
 
-  <!-- Pantalla App -->
-  <div class="app" id="app">
-    <h2>Bienvenida al chat 💬</h2>
-    <p>Zona segura</p>
-    <p>Aquí luego pondrás tu sistema de mensajes tipo foro.</p>
-  </div>
+<div id="chat" style="display:none">
+  <h2>Chat privado</h2>
+  <div id="messages"></div>
+  <input id="text" placeholder="Escribe un mensaje">
+  <button onclick="send()">Enviar</button>
+</div>
 
-  <script>
-    // contraseña
-    const PASSWORD = "sin nombre";
+<script>
+var firebaseConfig = {
+  apiKey: "AIzaSyCOF1P28mEDMlsQbvDYWkUTEF0EzQpi8t0",
+  authDomain: "chat-seguro-de-sin-nombre.firebaseapp.com",
+  databaseURL: "https://chat-seguro-de-sin-nombre-default-rtdb.firebaseio.com",
+  projectId: "chat-seguro-de-sin-nombre",
+  storageBucket: "chat-seguro-de-sin-nombre.appspot.com",
+  messagingSenderId: "325857020249",
+  appId: "1:325857020249:web:895ca856886fc1aab3e448"
+};
 
-    // mostrar login al inicio
-    document.getElementById("login").style.display = "block";
+firebase.initializeApp(firebaseConfig);
+var db = firebase.database();
 
-    function login() {
-      let input = document.getElementById("password").value;
+var currentUser = "";
 
-      if (input === PASSWORD) {
-        document.getElementById("login").style.display = "none";
-        document.getElementById("app").style.display = "block";
-      } else {
-        document.getElementById("error").innerText = "Contraseña incorrecta ❌";
-      }
-    }
-  </script>
+var users = {
+  brandon: "sin nombre",
+  yass: "sin nombre"
+};
 
+function loginUser(){
+  var u = document.getElementById("user").value.toLowerCase();
+  var p = document.getElementById("pass").value;
+
+  if(users[u] && users[u] === p){
+    currentUser = u;
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("chat").style.display = "block";
+    loadMessages();
+  } else {
+    alert("Usuario o contraseña incorrectos");
+  }
+}
+
+function send(){
+  var textBox = document.getElementById("text");
+  if(textBox.value.trim() !== ""){
+    db.ref("messages").push({
+      user: currentUser,
+      text: textBox.value
+    });
+    textBox.value = "";
+  }
+}
+
+document.getElementById("text").addEventListener("keypress", function(e){
+  if(e.key === "Enter") send();
+});
+
+function loadMessages(){
+  db.ref("messages").on("child_added", function(snapshot){
+    var data = snapshot.val();
+    var div = document.createElement("div");
+    div.classList.add("msg");
+    div.classList.add(data.user === currentUser ? "me" : "other");
+    div.innerText = data.user + ": " + data.text;
+    document.getElementById("messages").appendChild(div);
+  });
+}
+</script>
 </body>
 </html>
-
